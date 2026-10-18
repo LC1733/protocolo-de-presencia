@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#040711">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Presencia">
+<meta name="description" content="Protocolo de Presencia: experiencia interactiva de cuatro etapas con sonido, narración y ejercicios guiados.">
+<meta name="author" content="Luis Claudio Ricardo Cartes Henríquez">
+<title>Protocolo de Presencia</title>
+<!-- Tailwind CSS (versión fijada) -->
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<!-- Google Fonts: Cinzel & Plus Jakarta Sans -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
+
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    serif: ['Cinzel', 'Georgia', 'serif'],
+                    sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                },
+                colors: {
+                    gold: { 300: '#fde08d', 400: '#df9f28', 500: '#c58917' },
+                    cyan: { 400: '#22d3ee', 500: '#06b6d4' }
+                }
+            }
+        }
+    }
+</script>
+
+<style>
+    /* Diseño de un solo mundo visual (oscuro, deliberado) */
+    :root {
+        --bg: #040711;
+        --fg: #f1f5f9;
+        color-scheme: dark;
+    }
+
+    html, body { margin: 0; }
+
+    body {
+        background-color: var(--bg);
+        color: var(--fg);
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -webkit-tap-highlight-color: transparent;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Solo los controles no se seleccionan; las frases sí se pueden copiar */
+    button { user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+    #btnHoldRelease { -webkit-touch-callout: none; touch-action: none; }
+
+    .gutter {
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+    }
+    @media (min-width: 640px) {
+        .gutter-wide {
+            padding-left: max(24px, env(safe-area-inset-left, 0px));
+            padding-right: max(24px, env(safe-area-inset-right, 0px));
+        }
+    }
+    .sticky-top { top: calc(env(safe-area-inset-top, 0px) + 12px); }
+
+    button:focus-visible, input:focus-visible {
+        outline: 2px solid #fde08d;
+        outline-offset: 2px;
+    }
+
+    /* Holographic Glassmorphism */
+    .holo-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.65) 0%, rgba(9, 13, 26, 0.85) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+        transform-style: preserve-3d;
+    }
+    .holo-card.active-gold {
+        border-color: rgba(253, 224, 141, 0.6);
+        box-shadow: 0 0 35px rgba(223, 159, 40, 0.25), inset 0 0 20px rgba(253, 224, 141, 0.08);
+    }
+    .holo-card.active-cyan {
+        border-color: rgba(34, 211, 238, 0.6);
+        box-shadow: 0 0 35px rgba(6, 182, 212, 0.25), inset 0 0 20px rgba(34, 211, 238, 0.08);
+    }
+    .holo-card.active-purple {
+        border-color: rgba(192, 132, 252, 0.6);
+        box-shadow: 0 0 40px rgba(168, 85, 247, 0.3), inset 0 0 25px rgba(192, 132, 252, 0.12);
+    }
+
+    /* Custom Neon Buttons */
+    .btn-holo {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    @media (hover: hover) {
+        .btn-holo:hover {
+            border-color: rgba(34, 211, 238, 0.7);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.3), inset 0 0 12px rgba(34, 211, 238, 0.15);
+            transform: translateY(-1px);
+        }
+    }
+    .btn-holo:active { transform: translateY(1px) scale(0.98); }
+    .btn-holo.playing {
+        background: linear-gradient(90deg, rgba(6, 182, 212, 0.25), rgba(223, 159, 40, 0.25));
+        border-color: #fde08d;
+        box-shadow: 0 0 25px rgba(253, 224, 141, 0.4);
+    }
+
+    /* Icon Halo Animations */
+    @keyframes pulse-halo {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.18); opacity: 0.9; }
+    }
+    @keyframes rotate-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    @keyframes eye-blink {
+        0%, 92%, 100% { transform: scaleY(1); }
+        96% { transform: scaleY(0.1); }
+    }
+    @keyframes ripple-drop {
+        0% { r: 8; opacity: 0.8; }
+        100% { r: 26; opacity: 0; }
+    }
+    .animate-halo { animation: pulse-halo 4s infinite ease-in-out; }
+    .animate-spin-slow { animation: rotate-slow 18s linear infinite; }
+    .animate-blink { animation: eye-blink 5s infinite ease-in-out; transform-origin: center; }
+    .animate-ripple { animation: ripple-drop 2.8s infinite cubic-bezier(0.1, 0.6, 0.3, 1); }
+
+    /* Waveform Bars */
+    .wave-bar {
+        width: 3px;
+        background: linear-gradient(to top, #06b6d4, #fde08d);
+        border-radius: 999px;
+        transition: height 0.15s ease;
+    }
+
+    /* Floating Thought Particle */
+    @keyframes float-dissolve {
+        0% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+        60% { opacity: 0.8; filter: blur(1px); }
+        100% { transform: translateY(-140px) scale(1.25); opacity: 0; filter: blur(10px); }
+    }
+    .thought-bubble { animation: float-dissolve 5.5s forwards cubic-bezier(0.2, 0.7, 0.3, 1); }
+
+    /* Silence Mode Transition */
+    .silence-transition {
+        transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1.2s ease;
+    }
+    body.zen-silence-mode .ui-HideOnSilence {
+        opacity: 0.03;
+        pointer-events: none;
+        filter: blur(6px);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #040711; }
+    ::-webkit-scrollbar-thumb { background: rgba(34, 211, 238, 0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(253, 224, 141, 0.6); }
+
+    @media (prefers-reduced-motion: reduce) {
+        .animate-halo, .animate-spin-slow, .animate-blink, .animate-ripple { animation: none; }
+        .thought-bubble { animation-duration: 2.5s; }
+        .holo-card, .btn-holo { transition: none; }
+    }
+</style>
+</head>
+<body>
+
+<div class="min-h-screen relative selection:bg-cyan-500/30 selection:text-cyan-200">
+
+    <!-- BACKGROUND INTERACTIVE PARTICLE & SOUND WAVE CANVAS -->
+    <canvas id="cosmosCanvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+    <!-- AMBIENT GLOW ORBS -->
+    <div class="fixed top-0 left-1/4 w-96 h-96 max-w-full bg-cyan-500/10 rounded-full blur-[130px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-10 right-1/4 w-[28rem] h-[28rem] max-w-full bg-amber-500/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[34rem] h-[34rem] max-w-full bg-purple-600/10 rounded-full blur-[160px] pointer-events-none z-0"></div>
+
+    <!-- STICKY SPATIAL CONTROL BAR -->
+    <header class="sticky sticky-top z-40 mx-auto max-w-4xl gutter silence-transition ui-HideOnSilence">
+        <div class="holo-card rounded-2xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 border border-white/15">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-400/40 flex-shrink-0">
+                    <span id="audioPulseDot" class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-[11px] uppercase tracking-[0.2em] text-cyan-300 font-semibold">Frecuencias contemplativas</span>
+                        <span id="freqBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 font-mono">EN ESPERA</span>
+                    </div>
+                    <p id="statusSubtext" class="text-xs text-slate-400">Toca una etapa para activar sonido y voz · mejor con audífonos</p>
+                </div>
+            </div>
+
+            <canvas id="masterVisualizer" width="120" height="28" class="hidden sm:block rounded bg-slate-950/50 border border-white/5"></canvas>
+
+            <div class="flex items-center gap-2">
+                <button id="btnMasterGuide" onclick="toggleFullProtocolGuide()" class="btn-holo px-3.5 py-1.5 rounded-xl text-xs font-medium flex items-center gap-2 text-amber-200 border-amber-400/30">
+                    <svg class="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                    <span id="txtMasterGuide">GUIAR PROTOCOLO</span>
+                </button>
+
+                <button id="btnMasterAmbient" onclick="toggleAmbientDrone()" aria-label="Activar o detener tono de 432 Hz" class="btn-holo px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 text-cyan-200">
+                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                    </svg>
+                    <span id="txtAmbient">432Hz</span>
+                </button>
+
+                <button onclick="stopAllAudioAndSpeech()" title="Silenciar todo" aria-label="Silenciar todo" class="btn-holo p-1.5 rounded-xl text-slate-400 hover:text-rose-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="relative z-10 max-w-4xl mx-auto gutter gutter-wide pt-8 pb-20 silence-transition ui-HideOnSilence">
+
+        <!-- HERO -->
+        <section class="text-center mb-12 relative">
+            <div class="flex justify-center mb-3">
+                <div class="h-[1px] w-48 bg-gradient-to-r from-transparent via-amber-300/70 to-transparent"></div>
+            </div>
+            <p class="text-xs sm:text-sm uppercase tracking-[0.38em] text-amber-200/90 font-semibold mb-2">PROTOCOLO DE</p>
+            <h1 class="font-serif text-4xl sm:text-6xl font-bold tracking-wide bg-gradient-to-b from-white via-slate-100 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(34,211,238,0.35)] mb-4">
+                Presencia
+            </h1>
+            <div class="flex justify-center items-center gap-2 mb-6">
+                <span class="w-12 h-[1px] bg-gradient-to-r from-transparent to-amber-400/60"></span>
+                <span class="w-2 h-2 rotate-45 border border-amber-300 bg-amber-400/30 shadow-[0_0_10px_#fde08d]"></span>
+                <span class="w-12 h-[1px] bg-gradient-to-l from-transparent to-amber-400/60"></span>
+            </div>
+            <blockquote class="max-w-2xl mx-auto text-base sm:text-xl italic font-light text-slate-200/95 leading-relaxed px-4">
+                “La libertad no comienza cuando cambias tus pensamientos. Comienza cuando descubres que no eres ellos.”
+            </blockquote>
+        </section>
+
+        <div class="space-y-6">
+
+            <!-- 1. OBSERVACIÓN -->
+            <article id="card-1" class="holo-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group" data-tilt>
+                <div class="flex flex-col sm:flex-row items-start gap-6">
+                    <div class="relative flex-shrink-0 self-center sm:self-start">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-cyan-500/20 border border-amber-300/50 flex items-center justify-center shadow-[0_0_30px_rgba(253,224,141,0.25)] relative">
+                            <div class="absolute inset-0 rounded-full border border-cyan-400/40 animate-halo"></div>
+                            <svg class="w-11 h-11 text-amber-300 animate-blink drop-shadow-[0_0_8px_rgba(253,224,141,0.8)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M1.5 12S5.5 5.5 12 5.5 22.5 12 22.5 12 18.5 18.5 12 18.5 1.5 12 1.5 12z"/>
+                                <circle cx="12" cy="12" r="3.5" fill="rgba(34,211,238,0.3)" stroke="#22d3ee" stroke-width="1.5"/>
+                                <circle cx="12" cy="12" r="1.2" fill="#fde08d"/>
+                            </svg>
+                        </div>
+                        <button onclick="playCardFrequency(1, 432)" class="mt-2.5 w-full btn-holo py-1 px-2.5 rounded-full text-[11px] font-semibold tracking-wider text-amber-200 flex items-center justify-center gap-1">
+                            <span id="playIcon-1">▶</span> <span>432 Hz</span>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 w-full min-w-0">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                            <span class="text-xs font-mono tracking-widest text-amber-400/90 font-bold">O · ETAPA 01</span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <div id="wave-1" class="flex items-center gap-1 h-5 px-2 opacity-40 transition-opacity" aria-hidden="true">
+                                    <span class="wave-bar h-2"></span><span class="wave-bar h-4"></span><span class="wave-bar h-3"></span><span class="wave-bar h-5"></span><span class="wave-bar h-2"></span><span class="wave-bar h-4"></span>
+                                </div>
+                                <button onclick="narrateStage(1)" id="btnVoice-1" class="btn-holo px-3 py-1 rounded-full text-xs text-cyan-200 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                                    <span>ESCUCHAR</span>
+                                </button>
+                                <button onclick="toggleExercise(1)" class="btn-holo px-3 py-1 rounded-full text-xs text-amber-200 border-amber-400/40 flex items-center gap-1">
+                                    <span>✨ EXPERIMENTAR</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1">Observación</h2>
+                        <p class="text-base sm:text-lg italic text-amber-200/95 mb-3 font-light">
+                            Hay algo en ti que estaba antes de que apareciera el pensamiento.
+                        </p>
+                        <p class="text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
+                            No creas el primer pensamiento. No sigas el primer impulso. Solo observa. Entre quien piensa y quien sabe que está pensando hay una distancia: ahí empieza la libertad de elegir en vez de reaccionar.
+                        </p>
+
+                        <div id="exercise-1" class="hidden mt-5 pt-4 border-t border-white/10">
+                            <p class="text-xs uppercase tracking-wider text-cyan-300 mb-2 font-semibold">
+                                Laboratorio de Distancia Mental — Escribe un pensamiento recurrente y obsérvalo disolverse sin identificarte:
+                            </p>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input id="thoughtInput" type="text" placeholder="Ej: Tengo miedo de lo que pase mañana..." aria-label="Pensamiento recurrente" class="flex-1 min-w-0 bg-slate-950/70 border border-cyan-500/30 rounded-xl px-4 py-2 text-base sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400" onkeydown="if(event.key==='Enter') releaseThought()">
+                                <button onclick="releaseThought()" class="btn-holo px-5 py-2 rounded-xl text-xs font-semibold text-cyan-200 border-cyan-400/40 whitespace-nowrap">
+                                    SOLO OBSERVAR ✦
+                                </button>
+                            </div>
+                            <div id="thoughtSky" class="relative h-24 mt-3 rounded-xl bg-slate-950/50 border border-white/5 overflow-hidden flex items-center justify-center">
+                                <span id="thoughtHint" class="text-xs text-slate-500 italic px-3 text-center">Tú eres el espacio silencioso donde los pensamientos aparecen y desaparecen...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 2. LIBERACIÓN -->
+            <article id="card-2" class="holo-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group" data-tilt>
+                <div class="flex flex-col sm:flex-row items-start gap-6">
+                    <div class="relative flex-shrink-0 self-center sm:self-start">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-400/20 via-blue-500/10 to-amber-400/20 border border-cyan-300/50 flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.25)] relative">
+                            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 60 60" aria-hidden="true">
+                                <circle cx="30" cy="30" r="12" fill="none" stroke="rgba(34,211,238,0.5)" stroke-width="1" class="animate-ripple"/>
+                            </svg>
+                            <svg class="w-10 h-10 text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.8)]" viewBox="0 0 24 24" fill="rgba(34,211,238,0.25)" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                            </svg>
+                        </div>
+                        <button onclick="playCardFrequency(2, 528)" class="mt-2.5 w-full btn-holo py-1 px-2.5 rounded-full text-[11px] font-semibold tracking-wider text-cyan-200 flex items-center justify-center gap-1">
+                            <span id="playIcon-2">▶</span> <span>528 Hz</span>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 w-full min-w-0">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                            <span class="text-xs font-mono tracking-widest text-cyan-400/90 font-bold">L · ETAPA 02</span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <div id="wave-2" class="flex items-center gap-1 h-5 px-2 opacity-40 transition-opacity" aria-hidden="true">
+                                    <span class="wave-bar h-3"></span><span class="wave-bar h-5"></span><span class="wave-bar h-2"></span><span class="wave-bar h-4"></span><span class="wave-bar h-3"></span><span class="wave-bar h-5"></span>
+                                </div>
+                                <button onclick="narrateStage(2)" id="btnVoice-2" class="btn-holo px-3 py-1 rounded-full text-xs text-cyan-200 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                                    <span>ESCUCHAR</span>
+                                </button>
+                                <button onclick="toggleExercise(2)" class="btn-holo px-3 py-1 rounded-full text-xs text-amber-200 border-amber-400/40 flex items-center gap-1">
+                                    <span>💧 SOLTAR CARGA</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1">Liberación</h2>
+                        <p class="text-base sm:text-lg italic text-cyan-200/95 mb-3 font-light">
+                            Lo que no viviste sigue viviendo dentro de ti, disfrazado.
+                        </p>
+                        <p class="text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
+                            El dolor que niegas no desaparece: cambia de idioma y vuelve como ansiedad, rabia o control. Liberar no es olvidar ni justificar. Es dejar de sostener lo que ya terminó, para que esa energía vuelva a ser vida.
+                        </p>
+
+                        <div id="exercise-2" class="hidden mt-5 pt-4 border-t border-white/10">
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-2xl border border-cyan-500/20">
+                                <div class="text-center sm:text-left">
+                                    <p class="text-xs uppercase tracking-wider text-amber-300 font-semibold mb-1">Soltar con 528 Hz</p>
+                                    <p id="releaseStatusText" class="text-xs text-slate-300">Mantén presionado el orbe para reunir la tensión acumulada, y suéltalo para liberar esa energía.</p>
+                                </div>
+                                <button id="btnHoldRelease"
+                                    onmousedown="startEnergyHold()" onmouseup="completeEnergyRelease()" onmouseleave="cancelEnergyHold()"
+                                    ontouchstart="startEnergyHold(event)" ontouchend="completeEnergyRelease(event)" ontouchcancel="cancelEnergyHold()"
+                                    oncontextmenu="return false"
+                                    class="relative w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br from-cyan-500/20 to-amber-500/20 border-2 border-cyan-400/60 shadow-[0_0_25px_rgba(34,211,238,0.3)] active:scale-95 transition-transform flex-shrink-0">
+                                    <div id="holdProgressOrb" class="absolute inset-0 rounded-full bg-cyan-400/30 scale-0 transition-transform duration-75"></div>
+                                    <span class="relative z-10 text-[11px] font-bold tracking-wider text-center text-white px-2">MANTÉN Y SUELTA</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 3. CONCIENCIA -->
+            <article id="card-3" class="holo-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group" data-tilt>
+                <div class="flex flex-col sm:flex-row items-start gap-6">
+                    <div class="relative flex-shrink-0 self-center sm:self-start">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-amber-300/25 via-amber-500/10 to-purple-500/20 border border-amber-300/60 flex items-center justify-center shadow-[0_0_30px_rgba(253,224,141,0.3)] relative">
+                            <svg class="w-12 h-12 text-amber-300 animate-spin-slow drop-shadow-[0_0_10px_rgba(253,224,141,0.9)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                                <circle cx="12" cy="12" r="4.5" fill="rgba(253,224,141,0.25)"/>
+                                <path stroke-linecap="round" d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"/>
+                            </svg>
+                        </div>
+                        <button onclick="playCardFrequency(3, 639)" class="mt-2.5 w-full btn-holo py-1 px-2.5 rounded-full text-[11px] font-semibold tracking-wider text-amber-200 flex items-center justify-center gap-1">
+                            <span id="playIcon-3">▶</span> <span>639 Hz</span>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 w-full min-w-0">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                            <span class="text-xs font-mono tracking-widest text-amber-400/90 font-bold">C · ETAPA 03</span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <div id="wave-3" class="flex items-center gap-1 h-5 px-2 opacity-40 transition-opacity" aria-hidden="true">
+                                    <span class="wave-bar h-4"></span><span class="wave-bar h-2"></span><span class="wave-bar h-5"></span><span class="wave-bar h-3"></span><span class="wave-bar h-4"></span><span class="wave-bar h-2"></span>
+                                </div>
+                                <button onclick="narrateStage(3)" id="btnVoice-3" class="btn-holo px-3 py-1 rounded-full text-xs text-cyan-200 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                                    <span>ESCUCHAR</span>
+                                </button>
+                                <button onclick="toggleExercise(3)" class="btn-holo px-3 py-1 rounded-full text-xs text-amber-200 border-amber-400/40 flex items-center gap-1">
+                                    <span>🧘 MEDITAR / ENTRAR</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1">Conciencia</h2>
+                        <p class="text-base sm:text-lg italic text-amber-200/95 mb-3 font-light">
+                            Quizás no eres tus pensamientos. Eres el espacio donde aparecen y desaparecen.
+                        </p>
+                        <p class="text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
+                            Antes de cada palabra o decisión hay un instante sin nombre ni historia. Permanecer ahí te permite sentir una emoción sin convertirte en ella, y responder distinto a como reaccionabas antes.
+                        </p>
+
+                        <div id="exercise-3" class="hidden mt-5 pt-4 border-t border-white/10">
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-950/60 p-4 rounded-2xl border border-amber-400/20">
+                                <div>
+                                    <p class="text-xs uppercase tracking-wider text-cyan-300 font-semibold mb-1">Respiración guiada 4-4-4</p>
+                                    <p id="breathInstruction" class="text-sm text-slate-200 font-medium">Habita el instante previo a cada reacción. Sincroniza tu respiración con el pulso de luz.</p>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="relative w-20 h-20 flex items-center justify-center">
+                                        <div id="breathOrb" class="w-10 h-10 rounded-full bg-gradient-to-r from-amber-300/40 to-cyan-400/40 border border-amber-200 transition-all duration-[4000ms] ease-in-out shadow-[0_0_25px_rgba(253,224,141,0.5)]"></div>
+                                        <span id="breathWord" class="absolute text-[10px] font-bold uppercase tracking-widest text-white pointer-events-none">PAUSA</span>
+                                    </div>
+                                    <button id="btnBreathToggle" onclick="toggleBreathingGuide()" class="btn-holo px-4 py-2 rounded-xl text-xs font-semibold text-amber-200">
+                                        INICIAR GUÍA
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 4. EL SILENCIO -->
+            <article id="card-4" class="holo-card rounded-3xl p-6 sm:p-8 relative overflow-hidden group" data-tilt>
+                <div class="flex flex-col sm:flex-row items-start gap-6">
+                    <div class="relative flex-shrink-0 self-center sm:self-start">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-400/20 via-purple-500/15 to-slate-900 border border-cyan-300/50 flex items-center justify-center shadow-[0_0_35px_rgba(34,211,238,0.3)] relative">
+                            <div class="w-11 h-11 rounded-full border-[3px] border-amber-200/90 shadow-[0_0_15px_#22d3ee,inset_0_0_15px_#22d3ee] animate-halo"></div>
+                        </div>
+                        <button onclick="playCardFrequency(4, 136.1)" class="mt-2.5 w-full btn-holo py-1 px-2.5 rounded-full text-[11px] font-semibold tracking-wider text-cyan-200 flex items-center justify-center gap-1">
+                            <span id="playIcon-4">▶</span> <span>OM 136Hz</span>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 w-full min-w-0">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                            <span class="text-xs font-mono tracking-widest text-purple-300 font-bold">? · ETAPA 04</span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <div id="wave-4" class="flex items-center gap-1 h-5 px-2 opacity-40 transition-opacity" aria-hidden="true">
+                                    <span class="wave-bar h-2"></span><span class="wave-bar h-3"></span><span class="wave-bar h-2"></span><span class="wave-bar h-3"></span><span class="wave-bar h-2"></span><span class="wave-bar h-2"></span>
+                                </div>
+                                <button onclick="narrateStage(4)" id="btnVoice-4" class="btn-holo px-3 py-1 rounded-full text-xs text-cyan-200 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                                    <span>ESCUCHAR</span>
+                                </button>
+                                <button onclick="enterDeepSilenceMode()" class="btn-holo px-3 py-1 rounded-full text-xs text-purple-200 border-purple-400/40 flex items-center gap-1">
+                                    <span>◯ ENTRAR AL SILENCIO</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1">El silencio</h2>
+                        <p class="text-base sm:text-lg italic text-purple-200/95 mb-3 font-light">
+                            El último paso no es hacer más. Es dejar de resistir.
+                        </p>
+                        <p class="text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
+                            Ya no observas para controlar, ni liberas para sentirte mejor. Solo permaneces, y hasta el observador se disuelve. La pregunta cambia: ¿qué permanece cuando dejas de aferrarte a lo que cambia?
+                        </p>
+                    </div>
+                </div>
+            </article>
+
+        </div>
+
+        <!-- REFLEXIÓN FINAL -->
+        <section class="mt-10">
+            <div id="card-5" class="holo-card active-purple rounded-3xl p-6 sm:p-9 relative overflow-hidden border-2 border-purple-400/40">
+                <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-amber-300/80 rounded-tl-2xl pointer-events-none"></div>
+                <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-amber-300/80 rounded-tr-2xl pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-amber-300/80 rounded-bl-2xl pointer-events-none"></div>
+                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-amber-300/80 rounded-br-2xl pointer-events-none"></div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <h3 class="text-xl sm:text-2xl font-bold text-white tracking-wide flex items-center gap-2.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-300 shadow-[0_0_12px_#fde08d]"></span>
+                        Reflexión final
+                    </h3>
+                    <button onclick="narrateStage(5)" id="btnVoice-5" class="btn-holo px-4 py-1.5 rounded-full text-xs font-semibold text-amber-200 border-amber-300/40 flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                        <span>ESCUCHAR REFLEXIÓN</span>
+                    </button>
+                </div>
+
+                <p class="text-base sm:text-lg text-slate-100 leading-relaxed font-light">
+                    No eres cada pensamiento que aparece, ni cada emoción que atraviesas, ni cada historia que recuerdas. Eres aquello que permanece cuando todo lo demás cambia. Quizás el propósito no sea convertirte en alguien distinto, sino recordar quién estaba aquí antes del miedo, antes del personaje, antes de la historia.
+                </p>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="mt-12 text-center border-t border-white/10 pt-6">
+            <p class="text-[11px] text-slate-500 leading-relaxed max-w-2xl mx-auto mb-3">
+                Las frecuencias (432, 528, 639 y 136,1 Hz) provienen de tradiciones contemplativas y se usan aquí como acompañamiento sonoro. No constituyen tratamiento ni tienen un efecto clínico demostrado. El pulso binaural de 4 Hz solo se percibe con audífonos.
+            </p>
+            <p class="text-xs text-slate-400 tracking-wide leading-relaxed">
+                © 2026 Luis Claudio Ricardo Cartes Henríquez · Creación original protegida — Convenio de Berna / OMPI · Prohibida su reproducción, adaptación o uso en entrenamiento de IA sin autorización expresa.
+            </p>
+        </footer>
+    </main>
+
+    <!-- MODO SILENCIO -->
+    <div id="zenSilenceOverlay" class="fixed inset-0 z-50 pointer-events-none opacity-0 transition-opacity duration-1000 flex flex-col items-center justify-center gutter text-center" aria-hidden="true">
+        <div class="relative flex items-center justify-center mb-8">
+            <div class="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-2 border-cyan-300/60 shadow-[0_0_80px_rgba(34,211,238,0.45),inset_0_0_50px_rgba(253,224,141,0.25)] animate-halo flex items-center justify-center">
+                <div class="w-24 h-24 rounded-full border border-amber-200/40"></div>
+            </div>
+        </div>
+        <p class="font-serif text-xl sm:text-3xl text-slate-100 max-w-xl mb-3 tracking-wide drop-shadow">
+            “¿Qué permanece cuando dejas de aferrarte a lo que cambia?”
+        </p>
+        <p class="text-xs sm:text-sm text-cyan-300/80 uppercase tracking-[0.3em] mb-8">
+            Solo permanece · Sin resistir
+        </p>
+        <button id="btnExitSilence" onclick="exitDeepSilenceMode()" class="btn-holo px-6 py-2.5 rounded-full text-xs font-semibold tracking-widest text-amber-200 border-amber-300/50 pointer-events-auto">
+            VOLVER AL PROTOCOLO
+        </button>
+        <p class="mt-3 text-[11px] text-slate-500 hidden sm:block">o presiona Esc</p>
+    </div>
+</div>
+
+<script>
+    /* 1. TEXTOS DEL PROTOCOLO (NARRACIÓN) */
+    const protocolStages = {
+        0: "Protocolo de Presencia. La libertad no comienza cuando cambias tus pensamientos. Comienza cuando descubres que no eres ellos.",
+        1: "Observación. Hay algo en ti que estaba antes de que apareciera el pensamiento. No creas el primer pensamiento. No sigas el primer impulso. Solo observa. Entre quien piensa y quien sabe que está pensando hay una distancia: ahí empieza la libertad de elegir en vez de reaccionar.",
+        2: "Liberación. Lo que no viviste sigue viviendo dentro de ti, disfrazado. El dolor que niegas no desaparece: cambia de idioma y vuelve como ansiedad, rabia o control. Liberar no es olvidar ni justificar. Es dejar de sostener lo que ya terminó, para que esa energía vuelva a ser vida.",
+        3: "Conciencia. Quizás no eres tus pensamientos. Eres el espacio donde aparecen y desaparecen. Antes de cada palabra o decisión hay un instante sin nombre ni historia. Permanecer ahí te permite sentir una emoción sin convertirte en ella, y responder distinto a como reaccionabas antes.",
+        4: "El silencio. El último paso no es hacer más. Es dejar de resistir. Ya no observas para controlar, ni liberas para sentirte mejor. Solo permaneces, y hasta el observador se disuelve. La pregunta cambia: ¿qué permanece cuando dejas de aferrarte a lo que cambia?",
+        5: "Reflexión final. No eres cada pensamiento que aparece, ni cada emoción que atraviesas, ni cada historia que recuerdas. Eres aquello que permanece cuando todo lo demás cambia. Quizás el propósito no sea convertirte en alguien distinto, sino recordar quién estaba aquí antes del miedo, antes del personaje, antes de la historia."
+    };
+    const stageFreqs = { 1: 432, 2: 528, 3: 639, 4: 136.1, 5: 432 };
+
+    /* 2. SINTETIZADOR WEB AUDIO */
+    let audioCtx = null;
+    let masterGain = null;
+    let analyser = null;
+    let activeOscillators = [];
+    let currentPlayingCard = null;
+    let isAmbientOn = false;
+    let isFullGuideRunning = false;
+    let guideRunId = 0;
+
+    // Teléfonos: iOS silencia Web Audio con el interruptor de silencio.
+    // Un audio HTML silencioso en bucle y la sesión "playback" lo evitan.
+    let mobileAudioUnlocked = false;
+    function makeSilentWavUrl() {
+        const sr = 8000, n = 800;
+        const buf = new ArrayBuffer(44 + n);
+        const v = new DataView(buf);
+        const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+        w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVE');
+        w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, sr, true); v.setUint32(28, sr, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+        w(36, 'data'); v.setUint32(40, n, true);
+        for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
+        return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+    }
+    function unlockMobileAudio() {
+        if (mobileAudioUnlocked) return;
+        mobileAudioUnlocked = true;
+        try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+        try {
+            const a = document.createElement('audio');
+            a.setAttribute('playsinline', '');
+            a.setAttribute('aria-hidden', 'true');
+            a.loop = true;
+            a.src = makeSilentWavUrl();
+            const p = a.play();
+            if (p && p.catch) p.catch(() => {});
+        } catch (e) {}
+    }
+
+    function initAudioEngine() {
+        if (!audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContextClass();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 64;
+            masterGain.connect(analyser);
+            analyser.connect(audioCtx.destination);
+        }
+        if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') audioCtx.resume();
+        unlockMobileAudio();
+    }
+
+    // Al volver a la pestaña (p. ej. tras una llamada), reanuda el audio si había sonido activo
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && audioCtx && isAmbientOn && audioCtx.state !== 'running') audioCtx.resume();
+    });
+
+    function stopActiveTones() {
+        if (!audioCtx) { activeOscillators = []; return; }
+        activeOscillators.forEach(item => {
+            try {
+                item.gain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.35);
+                setTimeout(() => {
+                    try { item.osc.stop(); item.osc.disconnect(); } catch (e) {}
+                }, 500);
+            } catch (e) {}
+        });
+        activeOscillators = [];
+    }
+
+    // Envía un nodo al oído izquierdo (-1), al centro (0) o al derecho (+1)
+    function connectPanned(node, pan) {
+        if (pan === 0) { node.connect(masterGain); return; }
+        if (audioCtx.createStereoPanner) {
+            const p = audioCtx.createStereoPanner();
+            p.pan.value = pan;
+            node.connect(p);
+            p.connect(masterGain);
+        } else {
+            const merger = audioCtx.createChannelMerger(2);
+            node.connect(merger, 0, pan < 0 ? 0 : 1);
+            merger.connect(masterGain);
+        }
+    }
+
+    // Binaural real: la fundamental va solo al oído izquierdo y la fundamental + 4 Hz
+    // solo al derecho; el cerebro percibe el pulso de 4 Hz. Quinta y suboctava al centro.
+    function startHarmonicDrone(baseFreq) {
+        initAudioEngine();
+        stopActiveTones();
+
+        const now = audioCtx.currentTime;
+        const layers = [
+            { f: baseFreq,       g: 0.20, type: 'sine',     pan: -1 },
+            { f: baseFreq + 4,   g: 0.20, type: 'sine',     pan:  1 },
+            { f: baseFreq * 1.5, g: 0.07, type: 'triangle', pan:  0 },
+            { f: baseFreq * 0.5, g: 0.14, type: 'sine',     pan:  0 }
+        ];
+
+        layers.forEach(layer => {
+            const osc = audioCtx.createOscillator();
+            const oscGain = audioCtx.createGain();
+            osc.type = layer.type;
+            osc.frequency.setValueAtTime(layer.f, now);
+            oscGain.gain.setValueAtTime(0.001, now);
+            oscGain.gain.exponentialRampToValueAtTime(layer.g, now + 1.2);
+            osc.connect(oscGain);
+            connectPanned(oscGain, layer.pan);
+            osc.start(now);
+            activeOscillators.push({ osc, gain: oscGain });
+        });
+
+        playChimeBell(baseFreq * 2, 0.25);
+
+        document.getElementById('freqBadge').textContent = `${baseFreq} Hz ACTIVO`;
+        document.getElementById('audioPulseDot').classList.add('animate-ping');
+    }
+
+    function playChimeBell(freq = 864, volume = 0.18) {
+        initAudioEngine();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.995, now + 2.4);
+        gain.gain.setValueAtTime(volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 2.6);
+    }
+
+    function syncMasterButton() {
+        document.getElementById('btnMasterAmbient').classList.toggle('playing', isAmbientOn);
+    }
+
+    function playCardFrequency(cardId, freq) {
+        if (currentPlayingCard === cardId) {
+            stopActiveTones();
+            resetCardVisuals();
+            currentPlayingCard = null;
+            isAmbientOn = false;
+            document.getElementById('freqBadge').textContent = 'EN PAUSA';
+            document.getElementById('audioPulseDot').classList.remove('animate-ping');
+            syncMasterButton();
+            return;
+        }
+
+        resetCardVisuals();
+        currentPlayingCard = cardId;
+        isAmbientOn = true;
+        startHarmonicDrone(freq);
+
+        if (cardId !== 5) {
+            const card = document.getElementById(`card-${cardId}`);
+            if (card) card.classList.add(cardId % 2 === 1 ? 'active-gold' : 'active-cyan');
+        }
+
+        const playIcon = document.getElementById(`playIcon-${cardId}`);
+        if (playIcon) playIcon.textContent = '■';
+
+        const wave = document.getElementById(`wave-${cardId}`);
+        if (wave) wave.classList.remove('opacity-40');
+
+        document.getElementById('statusSubtext').textContent = `Resonancia armónica sintonizada a ${freq} Hz`;
+        syncMasterButton();
+    }
+
+    function toggleAmbientDrone() {
+        if (isAmbientOn) {
+            stopActiveTones();
+            resetCardVisuals();
+            isAmbientOn = false;
+            currentPlayingCard = null;
+            document.getElementById('freqBadge').textContent = 'SILENCIO';
+            document.getElementById('audioPulseDot').classList.remove('animate-ping');
+            syncMasterButton();
+        } else {
+            playCardFrequency(1, 432);
+        }
+    }
+
+    function resetCardVisuals() {
+        for (let i = 1; i <= 5; i++) {
+            const c = document.getElementById(`card-${i}`);
+            if (c && i !== 5) c.classList.remove('active-gold', 'active-cyan');
+            const icon = document.getElementById(`playIcon-${i}`);
+            if (icon) icon.textContent = '▶';
+            const wave = document.getElementById(`wave-${i}`);
+            if (wave) wave.classList.add('opacity-40');
+            const vBtn = document.getElementById(`btnVoice-${i}`);
+            if (vBtn) vBtn.classList.remove('playing');
+        }
+    }
+
+    /* 3. NARRACIÓN (WEB SPEECH API) */
+    const hasSpeech = 'speechSynthesis' in window;
+    let esVoice = null;
+    let speechSeq = 0;
+
+    function loadVoices() {
+        if (!hasSpeech) return;
+        const voices = window.speechSynthesis.getVoices();
+        esVoice = voices.find(v => v.lang.startsWith('es') && /Natural|Google|Paulina|Monica/.test(v.name))
+            || voices.find(v => v.lang.startsWith('es'))
+            || null;
+    }
+    if (hasSpeech) {
+        loadVoices();
+        if (window.speechSynthesis.addEventListener) {
+            window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+        }
+    }
+
+    function speakText(text, onDone) {
+        const seq = ++speechSeq;
+        const finish = () => { if (seq === speechSeq && onDone) onDone(); };
+
+        if (!hasSpeech) {
+            setTimeout(finish, Math.max(3000, text.length * 60));
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+        if (!esVoice) loadVoices();
+
+        const parts = text.split(/(?<=[.?!:])\s+/).filter(p => p.trim());
+        parts.forEach((part, i) => {
+            const u = new SpeechSynthesisUtterance(part);
+            u.lang = 'es-ES';
+            u.rate = 0.88;
+            u.pitch = 0.95;
+            if (esVoice) u.voice = esVoice;
+            if (i === parts.length - 1) {
+                u.onend = finish;
+                u.onerror = finish;
+            }
+            window.speechSynthesis.speak(u);
+        });
+    }
+
+    function cancelSpeech() {
+        speechSeq++;
+        if (hasSpeech) window.speechSynthesis.cancel();
+    }
+
+    function narrateStage(stageId, onEndCallback = null, fromGuide = false) {
+        if (!fromGuide && isFullGuideRunning) resetGuideState();
+
+        if (!isAmbientOn || currentPlayingCard !== stageId) {
+            playCardFrequency(stageId, stageFreqs[stageId] || 432);
+        } else {
+            playChimeBell(639, 0.12);
+        }
+
+        if (!hasSpeech) {
+            document.getElementById('statusSubtext').textContent = 'Audio armónico activo (narración de voz no disponible en este navegador)';
+        }
+
+        document.querySelectorAll('[id^="btnVoice-"]').forEach(b => b.classList.remove('playing'));
+        const btn = document.getElementById(`btnVoice-${stageId}`);
+        if (btn) btn.classList.add('playing');
+
+        const card = document.getElementById(`card-${stageId}`);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        speakText(protocolStages[stageId], () => {
+            if (btn) btn.classList.remove('playing');
+            if (onEndCallback) onEndCallback();
+        });
+    }
+
+    function resetGuideState() {
+        isFullGuideRunning = false;
+        guideRunId++;
+        document.getElementById('btnMasterGuide').classList.remove('playing');
+        document.getElementById('txtMasterGuide').textContent = 'GUIAR PROTOCOLO';
+    }
+
+    function toggleFullProtocolGuide() {
+        if (isFullGuideRunning) {
+            stopAllAudioAndSpeech();
+            return;
+        }
+
+        const runId = ++guideRunId;
+        isFullGuideRunning = true;
+        document.getElementById('btnMasterGuide').classList.add('playing');
+        document.getElementById('txtMasterGuide').textContent = 'DETENER GUÍA';
+
+        const sequence = [0, 1, 2, 3, 4, 5];
+        let idx = 0;
+
+        function playNextStep() {
+            if (runId !== guideRunId || !isFullGuideRunning) return;
+            if (idx >= sequence.length) {
+                resetGuideState();
+                return;
+            }
+            const step = sequence[idx++];
+            if (step === 0) {
+                resetCardVisuals();
+                currentPlayingCard = null;
+                isAmbientOn = true;
+                startHarmonicDrone(432);
+                syncMasterButton();
+                document.getElementById('statusSubtext').textContent = 'Guía en curso: introducción';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                speakText(protocolStages[0], () => setTimeout(playNextStep, 900));
+            } else {
+                narrateStage(step, () => setTimeout(playNextStep, 1200), true);
+            }
+        }
+
+        playNextStep();
+    }
+
+    function stopAllAudioAndSpeech() {
+        resetGuideState();
+        isAmbientOn = false;
+        currentPlayingCard = null;
+        stopActiveTones();
+        resetCardVisuals();
+        cancelSpeech();
+        syncMasterButton();
+        document.getElementById('freqBadge').textContent = 'SILENCIADO';
+        document.getElementById('audioPulseDot').classList.remove('animate-ping');
+        document.getElementById('statusSubtext').textContent = 'Sonido en silencio. Toca cualquier tarjeta para reactivar.';
+    }
+
+    /* 4. EJERCICIOS INTERACTIVOS */
+    function toggleExercise(num) {
+        playChimeBell(741, 0.14);
+        const el = document.getElementById(`exercise-${num}`);
+        if (!el) return;
+        el.classList.toggle('hidden');
+        if (num === 3 && el.classList.contains('hidden') && isBreathing) toggleBreathingGuide();
+    }
+
+    function releaseThought() {
+        const input = document.getElementById('thoughtInput');
+        const sky = document.getElementById('thoughtSky');
+        const hint = document.getElementById('thoughtHint');
+        const val = input.value.trim();
+        if (!val) return;
+
+        playChimeBell(852, 0.2);
+        if (hint) hint.style.opacity = '0.25';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'thought-bubble absolute px-4 py-1.5 rounded-full bg-cyan-500/20 border border-amber-300/50 text-amber-100 text-xs sm:text-sm pointer-events-none shadow-[0_0_20px_rgba(34,211,238,0.4)] max-w-[90%] truncate';
+        bubble.textContent = `"${val}"`;
+        sky.appendChild(bubble);
+
+        input.value = '';
+        input.blur();
+        setTimeout(() => bubble.remove(), 5500);
+    }
+
+    let holdInterval = null;
+    let holdScale = 0;
+
+    function startEnergyHold(e) {
+        if (e) e.preventDefault();
+        initAudioEngine();
+        holdScale = 0.15;
+        const orb = document.getElementById('holdProgressOrb');
+        document.getElementById('releaseStatusText').textContent = 'Concentrando carga emocional... Suelta cuando sientas el impulso.';
+        playChimeBell(396, 0.15);
+
+        clearInterval(holdInterval);
+        holdInterval = setInterval(() => {
+            holdScale = Math.min(holdScale + 0.08, 1.35);
+            orb.style.transform = `scale(${holdScale})`;
+        }, 80);
+    }
+
+    function completeEnergyRelease(e) {
+        if (e) e.preventDefault();
+        if (!holdInterval) return;
+        clearInterval(holdInterval);
+        holdInterval = null;
+
+        const orb = document.getElementById('holdProgressOrb');
+        const status = document.getElementById('releaseStatusText');
+
+        if (holdScale > 0.45) {
+            playChimeBell(528, 0.3);
+            setTimeout(() => playChimeBell(792, 0.22), 180);
+            status.innerHTML = '<span class="text-cyan-300 font-semibold">✦ Energía liberada al espacio.</span> Dejar de sostener devuelve la vida.';
+            const r = document.getElementById('btnHoldRelease').getBoundingClientRect();
+            triggerParticleBurst(r.left + r.width / 2, r.top + r.height / 2);
+        } else {
+            status.textContent = 'Mantén presionado un instante más largo para acumular y liberar.';
+        }
+        orb.style.transform = 'scale(0)';
+        holdScale = 0;
+    }
+
+    function cancelEnergyHold() {
+        if (holdInterval) completeEnergyRelease();
+    }
+
+    let breathInterval = null;
+    let isBreathing = false;
+
+    function toggleBreathingGuide() {
+        const btn = document.getElementById('btnBreathToggle');
+        const orb = document.getElementById('breathOrb');
+        const word = document.getElementById('breathWord');
+        const desc = document.getElementById('breathInstruction');
+
+        if (isBreathing) {
+            clearInterval(breathInterval);
+            breathInterval = null;
+            isBreathing = false;
+            btn.textContent = 'INICIAR GUÍA';
+            word.textContent = 'PAUSA';
+            desc.textContent = 'Habita el instante previo a cada reacción. Sincroniza tu respiración con el pulso de luz.';
+            orb.style.transform = 'scale(1)';
+            return;
+        }
+
+        isBreathing = true;
+        btn.textContent = 'DETENER';
+        let phase = 0;
+
+        function runBreathCycle() {
+            if (!isBreathing) return;
+            if (phase === 0) {
+                word.textContent = 'INHALA';
+                desc.textContent = 'Inhala profundo... Reconoce el espacio antes del pensamiento.';
+                orb.style.transform = 'scale(1.85)';
+                playChimeBell(639, 0.12);
+                phase = 1;
+            } else if (phase === 1) {
+                word.textContent = 'SOSTÉN';
+                desc.textContent = 'Permanece en el instante sin nombre ni historia...';
+                playChimeBell(741, 0.08);
+                phase = 2;
+            } else {
+                word.textContent = 'EXHALA';
+                desc.textContent = 'Suelta suavemente sin convertirte en la emoción.';
+                orb.style.transform = 'scale(0.85)';
+                playChimeBell(528, 0.12);
+                phase = 0;
+            }
+        }
+
+        runBreathCycle();
+        breathInterval = setInterval(runBreathCycle, 4000);
+    }
+
+    function enterDeepSilenceMode() {
+        if (currentPlayingCard !== 4) playCardFrequency(4, 136.1);
+        document.body.classList.add('zen-silence-mode');
+        const overlay = document.getElementById('zenSilenceOverlay');
+        overlay.classList.remove('pointer-events-none', 'opacity-0');
+        overlay.classList.add('opacity-100');
+        overlay.setAttribute('aria-hidden', 'false');
+        setTimeout(() => document.getElementById('btnExitSilence').focus(), 300);
+    }
+
+    function exitDeepSilenceMode() {
+        if (!document.body.classList.contains('zen-silence-mode')) return;
+        playChimeBell(432, 0.15);
+        document.body.classList.remove('zen-silence-mode');
+        const overlay = document.getElementById('zenSilenceOverlay');
+        overlay.classList.add('pointer-events-none', 'opacity-0');
+        overlay.classList.remove('opacity-100');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') exitDeepSilenceMode();
+    });
+
+    /* 5. INCLINACIÓN 3D (solo con mouse) */
+    if (window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+        document.querySelectorAll('[data-tilt]').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                if (card.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') {
+                    card.style.transform = 'none';
+                    return;
+                }
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -2.5;
+                const rotateY = ((x - centerX) / centerX) * 2.5;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
+            });
+        });
+    }
+
+    /* 6. CANVAS DE PARTÍCULAS Y ONDA */
+    const canvas = document.getElementById('cosmosCanvas');
+    const ctx = canvas.getContext('2d');
+    const miniCanvas = document.getElementById('masterVisualizer');
+    const miniCtx = miniCanvas.getContext('2d');
+
+    let particles = [];
+    let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('touchmove', e => {
+        if (e.touches[0]) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }
+    }, { passive: true });
+
+    class QuantumParticle {
+        constructor(x, y, isBurst = false) {
+            this.x = x ?? Math.random() * canvas.width;
+            this.y = y ?? Math.random() * canvas.height;
+            this.size = Math.random() * 2.2 + 0.6;
+            const speed = isBurst ? (Math.random() * 4 + 1.5) : (Math.random() * 0.4 + 0.1);
+            const angle = Math.random() * Math.PI * 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.alpha = Math.random() * 0.65 + 0.2;
+            this.color = Math.random() > 0.45 ? '#22d3ee' : '#fde08d';
+            this.isBurst = isBurst;
+        }
+        update(audioBoost) {
+            this.x += this.vx * (1 + audioBoost * 1.5);
+            this.y += this.vy * (1 + audioBoost * 1.5);
+            if (this.isBurst) {
+                this.alpha -= 0.012;
+            } else {
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                if (Math.hypot(dx, dy) < 160) {
+                    this.x -= dx * 0.006;
+                    this.y -= dy * 0.006;
+                }
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+        }
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.alpha);
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const particleCount = reduceMotion ? 20 : (window.innerWidth < 640 ? 40 : 75);
+    for (let i = 0; i < particleCount; i++) particles.push(new QuantumParticle());
+
+    function triggerParticleBurst(x = window.innerWidth / 2, y = window.innerHeight / 2) {
+        for (let i = 0; i < 38; i++) particles.push(new QuantumParticle(x, y, true));
+    }
+
+    let waveTick = 0;
+    function animateScene() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        waveTick += 0.03;
+
+        let audioEnergy = 0;
+        if (analyser && isAmbientOn) {
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(data);
+            const sum = data.reduce((a, b) => a + b, 0);
+            audioEnergy = sum / (data.length * 255);
+
+            miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+            for (let i = 0; i < 20; i++) {
+                const val = data[i] || (Math.sin(waveTick + i) * 35 + 45);
+                const h = Math.max(3, (val / 255) * miniCanvas.height);
+                miniCtx.fillStyle = i % 2 === 0 ? '#22d3ee' : '#fde08d';
+                miniCtx.fillRect(i * 6, (miniCanvas.height - h) / 2, 4, h);
+            }
+
+            if (currentPlayingCard) {
+                const waveContainer = document.getElementById(`wave-${currentPlayingCard}`);
+                if (waveContainer) {
+                    waveContainer.querySelectorAll('.wave-bar').forEach((bar, idx) => {
+                        bar.style.height = `${Math.abs(Math.sin(waveTick * 2.5 + idx)) * 16 + 4}px`;
+                    });
+                }
+            }
+        } else {
+            miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = isAmbientOn ? 'rgba(34, 211, 238, 0.16)' : 'rgba(253, 224, 141, 0.07)';
+        ctx.lineWidth = 1.5;
+        for (let x = 0; x < canvas.width; x += 15) {
+            const y = canvas.height * 0.22 + Math.sin(x * 0.004 + waveTick) * (25 + audioEnergy * 60);
+            if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        particles = particles.filter(p => p.alpha > 0.02);
+        particles.forEach(p => { p.update(audioEnergy); p.draw(); });
+
+        requestAnimationFrame(animateScene);
+    }
+
+    animateScene();
+</script>
+</body>
+</html>
